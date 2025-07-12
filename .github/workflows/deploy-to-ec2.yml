@@ -9,52 +9,56 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Set up Java 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+    - name: Set up Java 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
 
-      - name: Set up Maven
-        uses: s4u/setup-maven-action@v1.3.1
-        with:
-          maven-version: '3.9.6'
+    - name: Cache Maven packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
 
-      - name: Build Spring Boot JAR
-        run: |
-          cd spring-service
-          mvn clean package -DskipTests
+    - name: Build Spring Boot JAR
+      run: |
+        cd spring-service
+        ./mvnw clean package -DskipTests
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
-        run: docker build -t spring-service ./spring-service
+    - name: Build Docker image
+      run: docker build -t spring-service ./spring-service
 
-      - name: Save Docker image as tar
-        run: docker save spring-service | gzip > app.tar.gz
+    - name: Save Docker image as tar
+      run: docker save spring-service | gzip > app.tar.gz
 
-      - name: Copy Docker image to EC2 via SCP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "app.tar.gz"
-          target: "/home/ec2-user"
+    - name: Copy Docker image to EC2 via SCP
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ec2-user
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: "app.tar.gz"
+        target: "/home/ec2-user"
 
-      - name: SSH into EC2 and deploy
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd /home/ec2-user
-            docker load < app.tar.gz
-            docker stop my-app || true
-            docker rm my-app || true
-            docker run -d -p 8085:8080 --name my-app spring-service
+    - name: SSH into EC2 and deploy
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ec2-user
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd /home/ec2-user
+          docker load < app.tar.gz
+          docker stop my-app || true
+          docker rm my-app || true
+          docker run -d -p 8085:8080 --name my-app spring-service
