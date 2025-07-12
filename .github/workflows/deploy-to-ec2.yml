@@ -17,43 +17,8 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-	  - name: Set up Maven
-		uses: s4u/setup-maven-action@v1
+
+      - name: Set up Maven
+        uses: s4u/setup-maven-action@v1
         with:
-          maven-version: '3.9.6'	  
-
-      - name: Build Spring Boot JAR
-        run: |
-          cd spring-service
-          ./mvn clean package -DskipTests
-
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image
-        run: docker build -t spring-service ./spring-service
-
-      - name: Save Docker image as tar
-        run: docker save spring-service | gzip > app.tar.gz
-
-      - name: Copy Docker image to EC2 via SCP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "app.tar.gz"
-          target: "/home/ec2-user"
-
-      - name: SSH into EC2 and deploy
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd /home/ec2-user
-            docker load < app.tar.gz
-            docker stop my-app || true
-            docker rm my-app || true
-            docker run -d -p 8085:8080 --name my-app spring-service
+          maven-v
