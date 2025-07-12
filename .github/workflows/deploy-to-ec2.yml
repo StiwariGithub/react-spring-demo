@@ -21,7 +21,7 @@ jobs:
       - name: Build Spring Boot JAR
         run: |
           cd spring-service
-          ./mvnw clean package -DskipTests
+          ./mvn clean package -DskipTests
 
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
