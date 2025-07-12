@@ -16,10 +16,10 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Build Docker image
-      run: docker build -t my-spring-app .
+      run: docker build -t spring-service ./spring-service
 
     - name: Save Docker image as tar
-      run: docker save my-spring-app | gzip > app.tar.gz
+      run: docker save spring-service | gzip > app.tar.gz
 
     - name: Copy Docker image to EC2 via SCP
       uses: appleboy/scp-action@v0.1.7
@@ -40,4 +40,4 @@ jobs:
           docker load < app.tar.gz
           docker stop my-app || true
           docker rm my-app || true
-          docker run -d -p 8085:8080 --name my-app my-spring-app
+          docker run -d -p 8085:8080 --name my-app spring-service
