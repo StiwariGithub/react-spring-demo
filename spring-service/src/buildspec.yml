@@ -1,0 +1,29 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_REGION: us-east-1
+    IMAGE_TAG: latest
+    ECR_REPO_URI: 636185081454.dkr.ecr.$AWS_REGION.amazonaws.com/spring-service
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto17
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO_URI
+      - echo Building Spring Boot App...
+      - mvn clean package -DskipTests
+  build:
+    commands:
+      - echo Building Docker Image...
+      - docker build -t $ECR_REPO_URI:$IMAGE_TAG .
+  post_build:
+    commands:
+      - echo Pushing to ECR...
+      - docker push $ECR_REPO_URI:$IMAGE_TAG
+
+artifacts:
+  files: []
