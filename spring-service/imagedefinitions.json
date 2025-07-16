@@ -1,0 +1,6 @@
+[
+  {
+    "name": "spring-service",
+    "imageUri": "123456789012.dkr.ecr.us-east-1.amazonaws.com/spring-service:latest"
+  }
+]
